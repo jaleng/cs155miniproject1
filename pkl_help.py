@@ -23,3 +23,8 @@ def read_make_pkl(filename, generate_func, compress=False):
         with open(filename, 'rb') as fo:
             obj = joblib.load(fo) # load = load object from file
         return obj
+
+def get_pkl(filename):
+    with open(filename, 'rb') as fo:
+        obj = joblib.load(fo)
+        return obj
