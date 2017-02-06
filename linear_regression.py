@@ -7,7 +7,7 @@ import sys
 import getopt
 from submission import make_submission_2008
 from submission import make_submission_2012
-
+from round_predictions import round_predictions
 
 # Get training data
 X_train_2008 = get_pkl("saved_objs/X_train_2008.pkl")
@@ -27,15 +27,9 @@ def gen_lin_reg_model():
     #
     return model
 
-def round_to_1_or_2(a):
-    if (a[0] > 1.5):
-        return 2
-    else:
-        return 1
-
-def lin_reg_modified_predict(model, Y):
-    preds = model.predict(Y).reshape(-1, 1)
-    mpreds = np.apply_along_axis(round_to_1_or_2, 1, preds)
+def lin_reg_modified_predict(model, X):
+    preds = model.predict(X).reshape(-1, 1)
+    mpreds = round_predictions(preds)
     # Debug
     print("mpreds.shape: " + str(mpreds.shape))
     return mpreds

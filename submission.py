@@ -19,5 +19,11 @@ def make_submission_2008(fn, predictions):
 def make_submission_2012(fn, predictions):
     # get 2012 ids
     ids = get_pkl("saved_objs/test_2012.pkl")[1:, 0:1]
+
+    # If passed 1d array, change to column
+    if (predictions.ndim == 1):
+        predictions = predictions.reshape((-1, 1))
+
     np.savetxt(fn, np.concatenate((ids, predictions), axis=1),
-               delimiter=',', header="id,PES1")
+               delimiter=',', header="id,PES1", comments='',
+               fmt="%d,%d")
