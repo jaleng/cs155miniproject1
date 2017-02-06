@@ -1,45 +1,22 @@
 import os.path
+import sys
+import getopt
 import numpy as np
-import pkl_help
+from pkl_help import get_pkl
 from pkl_help import read_make_pkl
-from sklearn.svm import SVC
 import preprocess_help as ph
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
-from matplotlib import pyplot as plt
+from sklearn.ensemble import AdaBoostClassifier
 from submission import make_submission_2008
+from submission import make_submission_2012
 from sklearn.tree import DecisionTreeClassifier
 
-
-X_train_2008 = read_make_pkl("saved_objs/X_train_2008.pkl",
-                           lambda: ph.remove_header_and_normalize_train(train_2008),
-                           compress=True)
-Y_train_2008 = read_make_pkl("saved_objs/Y_train_2008.pkl",
-                           lambda: ph.grab_train_Y(train_2008),
-                           compress=True)
-X_ver_2008 = read_make_pkl("saved_objs/X_ver_2008.pkl",
-                           lambda: ph.remove_header_and_normalize_ver(train_2008),
-                           compress=True)
-Y_ver_2008 = read_make_pkl("saved_objs/Y_ver_2008.pkl",
-                           lambda: ph.grab_ver_Y(train_2008),
-                           compress=True)
-X_test_2008 = read_make_pkl("saved_objs/X_test_2008.pkl",
-                           lambda: ph.remove_header_and_normalize_test(test_2008),
-                           compress=True)
-
-
-X = X_train_2008
-Y = np.ravel(Y_train_2008)
-
-X_ver = X_ver_2008
-Y_ver = np.ravel(Y_ver_2008)
+# Get training data
+X_train_2008 = get_pkl("saved_objs/X_train_2008.pkl")
+Y_train_2008 = get_pkl("saved_objs/Y_train_2008.pkl")
+X_test_2008 = get_pkl("saved_objs/X_test_2008.pkl")
+X_test_2012 = get_pkl("saved_objs/X_test_2012.pkl")
+X_ver = get_pkl("saved_objs/X_ver_2008.pkl")
+Y_ver = get_pkl("saved_objs/Y_ver_2008.pkl")
 
 def adaboost_modified_predict(model, Y):
     preds = model.predict(Y).reshape(-1, 1)
@@ -48,13 +25,26 @@ def adaboost_modified_predict(model, Y):
     return preds
 
 # Tried a few different parameters - should optimize further.
+def optimize_parameters():
+    max_depth = -1
+    max_est = -1
+    train_score = []
+    ver_score = []
+    for estimators in np.arange(1, 500):
+        train_score.apppend([])
+        ver_score.apppend([])
+        for depth in np.arange(1, 20):
+            adaboost_model = AdaBoostClassifier(DecisionTreeClassifier(max_depth=depth),
+                         n_estimators=estimators)
+            adaboost_model.fit(X_train_2008, Y_train_2008)
+            train_score[estimators-1].apppend(adaboost_model.score(X_train_2008, Y_train_2008))
+            ver_score[estimators-1].apppend(adaboost_model.score(X_ver, Y_ver))
+            print "Estimators: ", estimators, ". Max Depth: ", depth, ":"
+            print "Training Score: ", train_score[estimators-1][-1], ". Verification Score: ", ver_score[estimators-1][-1]
 
-adaboost_model = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1),
-                         n_estimators=200)
-adaboost_model.fit(X, Y)
+optimize_parameters()
 
-print "Training Score: ", adaboost_model.score(X, Y)
-print "Verification Score: ", adaboost_model.score(X_ver, Y_ver)
+# print "Training Score: ", adaboost_model.score(X, Y)
+# print "Verification Score: ", adaboost_model.score(X_ver, Y_ver)
 
-
-make_submission_2008("submissions/adaboost_2008.csv", adaboost_modified_predict(adaboost_model, X_test_2008))
+# make_submission_2008("submissions/adaboost_2008.csv", adaboost_modified_predict(adaboost_model, X_test_2008))
