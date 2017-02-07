@@ -23,7 +23,6 @@ def adaboost_modified_predict(model, Y):
     # Debug
     print("preds.shape: " + str(preds.shape))
     return preds
-
 # Pretty Slow... 
 def optimize_parameters():
     max_depth = -1
