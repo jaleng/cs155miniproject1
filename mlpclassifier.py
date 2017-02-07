@@ -35,7 +35,7 @@ def optimize_parameters():
         ver_score.append([])
         for y in np.arange(1, x+1):
             model = MLPClassifier(alpha=1e-5, hidden_layer_sizes=(x,y), random_state=1,
-                     shuffle=True, warm_start=1, verbose=1)
+                     shuffle=True, warm_start=1)
             model.fit(X_train_2008, Y_train_2008)
             train_score[x-1].append(model.score(X_train_2008, Y_train_2008))
             ver_score[x-1].append(model.score(X_ver, Y_ver))
@@ -43,13 +43,13 @@ def optimize_parameters():
                 score = ver_score[x-1][-1]
                 max_x = x
                 max_y = y
-                print "Estimators: ", x, ". Max Depth: ", y, ":"
+                print "X: ", x, ". Y: ", y, ":"
                 print "Training Score: ", train_score[x-1][-1], ". Verification Score: ", \
                      ver_score[x-1][-1]
     
 #Example params given. Will be decided by optimizing.
 def gen_mlp():
-    clf = MLPClassifier(alpha=1e-5, hidden_layer_sizes=(100,), random_state=1, shuffle=True, warm_start=1, verbose=1)
+    clf = MLPClassifier(alpha=1e-5, hidden_layer_sizes=(7,3), random_state=1, shuffle=True, warm_start=1, verbose=1)
     clf.fit(X_train_2008, Y_train_2008)
     return clf
 
