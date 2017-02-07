@@ -8,6 +8,7 @@ import preprocess_help as ph
 from sklearn.ensemble import VotingClassifier
 from submission import make_submission_2008
 from submission import make_submission_2012
+from sklearn.linear_model import RidgeClassifierCV
 
 # Get training data
 X_train_2008 = get_pkl("saved_objs/X_train_2008.pkl")
@@ -18,72 +19,56 @@ X_ver = get_pkl("saved_objs/X_ver_2008.pkl")
 Y_ver = get_pkl("saved_objs/Y_ver_2008.pkl")
 
 # Grab all models we have.
-ridge = get_pkl("saved_objs/ridge.pkl")
-lasso = get_pkl("saved_objs/lasso.pkl")
+ridge = RidgeClassifierCV().fit(X_train_2008, Y_train_2008)
+# lasso = get_pkl("saved_objs/lasso.pkl")
+mlp = get_pkl("saved_objs/mlp.pkl")
+rand_forest = get_pkl("saved_objs/rand_forest.pkl")
+adaboost = get_pkl("saved_objs/adaboost.pkl")
+# knn = get_pkl("saved_objs/knearest.pkl")
 
 
-
-def grad_boosting_modified_predict(model, Y):
+def voting_modified_predict(model, Y):
     preds = model.predict(Y).reshape(-1, 1)
     # Debug
     print("preds.shape: " + str(preds.shape))
     return preds
-
-# Pretty Slow... 
-def optimize_parameters():
-    max_depth = -1
-    max_est = -1
-    score = 0.0
-    train_score = []
-    ver_score = []
-    for estimators in np.arange(1, 500):
-        train_score.append([])
-        ver_score.append([])
-        for depth in np.arange(1, 20):
-            model = AdaBoostClassifier(DecisionTreeClassifier(max_depth=depth),
-                         n_estimators=estimators)
-            model.fit(X_train_2008, Y_train_2008)
-            train_score[estimators-1].append(model.score(X_train_2008, Y_train_2008))
-            ver_score[estimators-1].append(model.score(X_ver, Y_ver))
-            if ver_score[estimators-1][-1] > score:
-                score = ver_score[estimators-1][-1]
-                max_depth = depth
-                max_est = estimators
-                print "Estimators: ", estimators, ". Max Depth: ", depth, ":"
-                print "Training Score: ", train_score[estimators-1][-1], ". Verification Score: ", \
-                     ver_score[estimators-1][-1]
-    return (max_depth, max_est)
     
-#Example params given. Will be decided by optimizing.
-def gen_grad_boost():
-    clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0, max_depth=1, random_state=0)
+def gen_voting():
+    print "Making Voting Classifier"
+    clf =VotingClassifier(estimators=[('ridge', ridge), 
+                                      ('mlp', mlp),
+                                      ('rand_forest', rand_forest),
+                                      ('adaboost', adaboost)],
+                                       voting='hard')
+    print "Training Voting Classifier"
     clf.fit(X_train_2008, Y_train_2008)
+    print "Scoring Voting Classifier"
+    print "Training Score: ", clf.score(X_train_2008, Y_train_2008)
+    print "Ver Score: ", clf.score(X_ver, Y_ver)    
     return clf
 
 # Save Model 
-grad_boost = read_make_pkl("saved_objs/adaboost.pkl", gen_adaboost)
+voting = read_make_pkl("saved_objs/voting.pkl", gen_voting)
 
 def main(argv):
     try:
         opts, args = getopt.getopt(argv,"ho:",["output="])
     except getopt.GetoptError:
-        print 'gradientboosting.py [-o [2008] [2012] [tune]]'
+        print 'voting.py [-o [2008] [2012]]'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'gradientboosting.py [-o [2008] [2012] [tune]]'
+            print 'voting.py [-o [2008] [2012]]'
             sys.exit()
         elif opt in ("-o", "--output"):
             if (arg == "2008"):
                 # DEBUG
-                print("grad_boost.predict(X_test_2008).shape" +
-                      str(grad_boost.predict(X_test_2008).shape))
-                make_submission_2008("submissions/grad_boost_2008.csv", 
-                                      adaboost_modified_predict(grad_boost, X_test_2008))
+                print("voting.predict(X_test_2008).shape" +
+                      str(voting.predict(X_test_2008).shape))
+                make_submission_2008("submissions/voting_2008.csv", 
+                                      voting_modified_predict(voting, X_test_2008))
             elif (arg == "2012"):
-                make_submission_2012("submissions/grad_boost_2012.csv", 
-                                      adaboost_modified_predict(grad_boost, X_test_2012))
-            elif (arg == "tune"):
-                optimize_parameters()
+                make_submission_2012("submissions/voting_2012.csv", 
+                                      voting_modified_predict(voting, X_test_2012))
 if __name__ == "__main__":
     main(sys.argv[1:])
