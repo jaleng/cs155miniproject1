@@ -17,6 +17,12 @@ X_test_2012 = get_pkl("saved_objs/X_test_2012.pkl")
 X_ver = get_pkl("saved_objs/X_ver_2008.pkl")
 Y_ver = get_pkl("saved_objs/Y_ver_2008.pkl")
 
+# Grab all models we have.
+ridge = get_pkl("saved_objs/ridge.pkl")
+lasso = get_pkl("saved_objs/lasso.pkl")
+
+
+
 def grad_boosting_modified_predict(model, Y):
     preds = model.predict(Y).reshape(-1, 1)
     # Debug
