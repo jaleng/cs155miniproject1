@@ -23,28 +23,61 @@ def adaboost_modified_predict(model, Y):
     # Debug
     print("preds.shape: " + str(preds.shape))
     return preds
-
-# Tried a few different parameters - should optimize further.
+# Pretty Slow... 
 def optimize_parameters():
     max_depth = -1
     max_est = -1
+    score = 0.0
     train_score = []
     ver_score = []
     for estimators in np.arange(1, 500):
-        train_score.apppend([])
-        ver_score.apppend([])
+        train_score.append([])
+        ver_score.append([])
         for depth in np.arange(1, 20):
-            adaboost_model = AdaBoostClassifier(DecisionTreeClassifier(max_depth=depth),
+            model = AdaBoostClassifier(DecisionTreeClassifier(max_depth=depth),
                          n_estimators=estimators)
-            adaboost_model.fit(X_train_2008, Y_train_2008)
-            train_score[estimators-1].apppend(adaboost_model.score(X_train_2008, Y_train_2008))
-            ver_score[estimators-1].apppend(adaboost_model.score(X_ver, Y_ver))
-            print "Estimators: ", estimators, ". Max Depth: ", depth, ":"
-            print "Training Score: ", train_score[estimators-1][-1], ". Verification Score: ", ver_score[estimators-1][-1]
+            model.fit(X_train_2008, Y_train_2008)
+            train_score[estimators-1].append(model.score(X_train_2008, Y_train_2008))
+            ver_score[estimators-1].append(model.score(X_ver, Y_ver))
+            if ver_score[estimators-1][-1] > score:
+                score = ver_score[estimators-1][-1]
+                max_depth = depth
+                max_est = estimators
+                print "Estimators: ", estimators, ". Max Depth: ", depth, ":"
+                print "Training Score: ", train_score[estimators-1][-1], ". Verification Score: ", \
+                     ver_score[estimators-1][-1]
+    return (max_depth, max_est)
+    
+#Example params given. Will be decided by optimizing.
+def gen_adaboost():
+    clf = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), n_estimators=100)
+    clf.fit(X_train_2008, Y_train_2008)
+    return clf
 
-optimize_parameters()
+# Save Model 
+adaboost = read_make_pkl("saved_objs/adaboost.pkl", gen_adaboost)
 
-# print "Training Score: ", adaboost_model.score(X, Y)
-# print "Verification Score: ", adaboost_model.score(X_ver, Y_ver)
-
-# make_submission_2008("submissions/adaboost_2008.csv", adaboost_modified_predict(adaboost_model, X_test_2008))
+def main(argv):
+    try:
+        opts, args = getopt.getopt(argv,"ho:",["output="])
+    except getopt.GetoptError:
+        print 'adaboost.py [-o [2008] [2012] [tune]]'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'adaboost.py [-o [2008] [2012] [tune]]'
+            sys.exit()
+        elif opt in ("-o", "--output"):
+            if (arg == "2008"):
+                # DEBUG
+                print("adaboost_model.predict(X_test_2008).shape" +
+                      str(adaboost.predict(X_test_2008).shape))
+                make_submission_2008("submissions/adaboost_2008.csv", 
+                                      adaboost_modified_predict(adaboost, X_test_2008))
+            elif (arg == "2012"):
+                make_submission_2012("submissions/adaboost_2012.csv", 
+                                      adaboost_modified_predict(adaboost, X_test_2012))
+            elif (arg == "tune"):
+                optimize_parameters()
+if __name__ == "__main__":
+    main(sys.argv[1:])
