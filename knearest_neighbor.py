@@ -33,6 +33,7 @@ def optimize_parameters():
     ver_score = []
     for n in np.arange(1, 500):
         model = KNeighborsClassifier(n_neighbors=n)
+        print "Training Model with ", n, "neighbors."
         model.fit(X_train_2008, Y_train_2008)
         train_score.append(model.score(X_train_2008, Y_train_2008))
         ver_score.append(model.score(X_ver, Y_ver))
@@ -46,7 +47,7 @@ def optimize_parameters():
     
 #Example params given. Will be decided by optimizing.
 def gen_knearest():
-    clf = KNeighborsClassifier(n_neighbors=20)
+    clf = KNeighborsClassifier(n_neighbors=10)
     clf.fit(X_train_2008, Y_train_2008)
     return clf
 
